@@ -23,4 +23,4 @@ var e=require("process");const n=require("pitchfinder"),t=n.AMDF();let c=null;ex
 },{}],"Focm":[function(require,module,exports) {
 const{onFrequencyChange:e}=require("./audio"),{Elm:n}=require("./Main.elm"),r=n.Main.init({flags:{},node:document.querySelector("main#elm")});let s;r.ports.startListeningForFrequencyChanges.subscribe(()=>{s=e(e=>{r.ports.onFrequencyChange.send(e)})}),r.ports.stopListeningForFrequencyChanges.subscribe(()=>{s&&s.then(e=>e())});
 },{"./audio":"P9t3","./Main.elm":"8asW"}]},{},["Focm"], null)
-//# sourceMappingURL=guitar/src.c4ebfa5a.js.map
+//# sourceMappingURL=/guitar/src.c4ebfa5a.js.map
