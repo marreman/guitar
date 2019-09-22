@@ -6,14 +6,14 @@ const app = Elm.Main.init({
   node: document.querySelector("main#elm")
 });
 
-let unsubscribe;
+let audio;
 
 app.ports.startListeningForFrequencyChanges.subscribe(() => {
-  unsubscribe = onFrequencyChange(frequency => {
+  audio = onFrequencyChange(frequency => {
     app.ports.onFrequencyChange.send(frequency);
   });
 });
 
 app.ports.stopListeningForFrequencyChanges.subscribe(() => {
-  unsubscribe && unsubscribe();
+  audio && audio.then(disconnect => disconnect());
 });
