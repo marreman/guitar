@@ -1,0 +1,31 @@
+{
+  "name": "guitar",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "fft": "^0.2.1",
+    "fft-js": "0.0.12",
+    "parcel": "^1.12.3"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "elm-hot": "^1.1.2",
+    "node-elm-compiler": "^5.0.4"
+  },
+  "scripts": {
+    "start": "parcel src/index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marreman/guitar.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/marreman/guitar/issues"
+  },
+  "homepage": "https://github.com/marreman/guitar#readme"
+}
