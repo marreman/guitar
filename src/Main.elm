@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Element
@@ -35,7 +35,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { position = Nothing, speed = 1 }
+    ( { position = Nothing, speed = 1, listening = False }
     , generateRandomPosition
     )
 
@@ -44,6 +44,7 @@ type alias Model =
     { position :
         Maybe ( GuitarString, Note )
     , speed : Int
+    , listening : Bool
     }
 
 
@@ -78,6 +79,8 @@ type Msg
     = GotRandomPosition ( GuitarString, Note )
     | GenerateRandomPosition
     | AdjustSpeed Float
+    | GotFrequencyChange (Maybe Float)
+    | StartListeningForFrequencyChanges
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -92,10 +95,39 @@ update msg model =
         AdjustSpeed speed ->
             ( { model | speed = round speed }, Cmd.none )
 
+        StartListeningForFrequencyChanges ->
+            ( { model | listening = True }
+            , if not model.listening then
+                startListeningForFrequencyChanges ()
+
+              else
+                Cmd.none
+            )
+
+        GotFrequencyChange frequency ->
+            let
+                _ =
+                    Debug.log "frequency" frequency
+            in
+            ( model, Cmd.none )
+
+
+port startListeningForFrequencyChanges : () -> Cmd msg
+
+
+port onFrequencyChange : (Maybe Float -> msg) -> Sub msg
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every (toFloat model.speed * 1000) (always GenerateRandomPosition)
+    Sub.batch
+        [ Time.every (toFloat model.speed * 1000) (always GenerateRandomPosition)
+        , if model.listening then
+            onFrequencyChange GotFrequencyChange
+
+          else
+            Sub.none
+        ]
 
 
 view : Model -> Html Msg
@@ -108,6 +140,7 @@ view model =
                     |> Maybe.withDefault (text "")
                 )
             , viewSpeed model.speed
+            , Input.button [] { label = text "lyssna", onPress = Just StartListeningForFrequencyChanges }
             ]
 
 
