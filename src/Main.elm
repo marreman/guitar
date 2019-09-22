@@ -3,12 +3,12 @@ module Main exposing (main)
 import Browser
 import Element
     exposing
-        ( Element
+        ( Color
+        , Element
         , centerX
         , centerY
         , column
         , el
-        , paddingXY
         , paragraph
         , rgb
         , spacing
@@ -20,6 +20,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
 import Random
+import Time
 
 
 main : Program () Model Msg
@@ -27,20 +28,23 @@ main =
     Browser.element
         { init = init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         , view = view
         }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Nothing
+    ( { position = Nothing, speed = 1 }
     , generateRandomPosition
     )
 
 
 type alias Model =
-    Maybe ( GuitarString, Note )
+    { position :
+        Maybe ( GuitarString, Note )
+    , speed : Int
+    }
 
 
 type GuitarString
@@ -62,6 +66,7 @@ type Note
     | B
 
 
+generateRandomPosition : Cmd Msg
 generateRandomPosition =
     Random.pair
         (Random.uniform First [ Second, Third, Fourth, Fifth, Sixth ])
@@ -72,16 +77,25 @@ generateRandomPosition =
 type Msg
     = GotRandomPosition ( GuitarString, Note )
     | GenerateRandomPosition
+    | AdjustSpeed Float
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case Debug.log "msg" msg of
+    case msg of
         GenerateRandomPosition ->
             ( model, generateRandomPosition )
 
         GotRandomPosition position ->
-            ( Just position, Cmd.none )
+            ( { model | position = Just position }, Cmd.none )
+
+        AdjustSpeed speed ->
+            ( { model | speed = round speed }, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Time.every (toFloat model.speed * 1000) (always GenerateRandomPosition)
 
 
 view : Model -> Html Msg
@@ -89,22 +103,11 @@ view model =
     Element.layout [] <|
         column [ centerY, centerX, spacing 50 ] <|
             [ el [ centerX, Font.size 100 ] <|
-                (model
+                (model.position
                     |> Maybe.map viewPosition
                     |> Maybe.withDefault (text "")
                 )
-            , Input.button
-                [ centerX
-                , Background.color (rgb 0 0 0)
-                , Font.color (rgb 1 1 1)
-                , Font.variant Font.smallCaps
-                , paddingXY 25 15
-                , Border.rounded 9999
-                , Font.bold
-                ]
-                { label = text "generate random position"
-                , onPress = Just GenerateRandomPosition
-                }
+            , viewSpeed model.speed
             ]
 
 
@@ -112,7 +115,77 @@ viewPosition : ( GuitarString, Note ) -> Element Msg
 viewPosition ( guitarString, note ) =
     paragraph []
         [ el [ Font.bold ] (text (Debug.toString note))
-        , el [ Font.light, Font.color (rgb 0.8 0.8 0.8) ] (text " on the ")
+        , el [ Font.light, Font.color grey ] (text " on the ")
         , el [ Font.bold ] (text (Debug.toString guitarString))
-        , el [ Font.light, Font.color (rgb 0.8 0.8 0.8) ] (text " string")
+        , el [ Font.light, Font.color grey ] (text " string")
         ]
+
+
+viewSpeed : Int -> Element Msg
+viewSpeed speed =
+    el
+        [ Element.height (Element.px 30)
+        , Element.width (Element.px 500)
+        , centerX
+        ]
+    <|
+        Input.slider
+            [ Element.height (Element.px 30)
+            , Element.width (Element.px 500)
+            , centerX
+            , Element.behindContent
+                (Element.el
+                    [ Element.width Element.fill
+                    , Element.height (Element.px 2)
+                    , Element.centerY
+                    , Background.color grey
+                    , Border.rounded 2
+                    ]
+                    Element.none
+                )
+            ]
+            { onChange = AdjustSpeed
+            , label =
+                Input.labelBelow [ centerX ] <|
+                    paragraph [ Font.size 14 ] <|
+                        [ el [ Font.color grey ] (text "New position ") ]
+                            ++ speedToWord speed
+                            ++ [ el [ Font.color grey ] (text " second")
+                               ]
+            , min = 1
+            , max = 10
+            , step = Just 1
+            , value = toFloat speed
+            , thumb =
+                Input.defaultThumb
+            }
+
+
+speedToWord : Int -> List (Element Msg)
+speedToWord speed =
+    let
+        s =
+            case speed of
+                1 ->
+                    ""
+
+                2 ->
+                    "2nd"
+
+                3 ->
+                    "3rd"
+
+                n ->
+                    String.fromInt n
+                        ++ "th"
+    in
+    if String.isEmpty s then
+        [ text "every" ]
+
+    else
+        [ el [ Font.color grey ] (text "every "), text s ]
+
+
+grey : Color
+grey =
+    rgb 0.8 0.8 0.8
