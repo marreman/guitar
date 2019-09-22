@@ -24,26 +24,3 @@ exports.onFrequencyChange = f => {
     });
   });
 };
-
-exports.getNote = frequency => {
-  const A4 = 440;
-  const semitone = 69;
-  const noteStrings = [
-    "C",
-    "C♯",
-    "D",
-    "D♯",
-    "E",
-    "F",
-    "F♯",
-    "G",
-    "G♯",
-    "A",
-    "A♯",
-    "B"
-  ];
-  const note = 12 * (Math.log(frequency / A4) / Math.log(2));
-  const a = Math.round(note) + semitone;
-  console.log(a);
-  return noteStrings[a % 12];
-};
