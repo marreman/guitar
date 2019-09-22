@@ -4,23 +4,24 @@ const detectPitch = Pitchfinder.AMDF();
 let lastFrequency = null;
 
 exports.onFrequencyChange = f => {
-  const bufferSize = 4096;
-  const audioContext = new window.AudioContext();
-  const analyser = audioContext.createAnalyser();
-  const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+  const context = new window.AudioContext();
+  const analyser = context.createAnalyser();
+  const processor = context.createScriptProcessor(4096, 1, 1);
+  const process = event => {
+    const frequency = detectPitch(event.inputBuffer.getChannelData(0));
+
+    if (frequency !== lastFrequency) {
+      lastFrequency = frequency;
+      f(frequency);
+    }
+  };
 
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-    audioContext.createMediaStreamSource(stream).connect(analyser);
-    analyser.connect(scriptProcessor);
-    scriptProcessor.connect(audioContext.destination);
-    scriptProcessor.addEventListener("audioprocess", event => {
-      const data = event.inputBuffer.getChannelData(0);
-      const frequency = detectPitch(data);
-
-      if (frequency !== lastFrequency) {
-        lastFrequency = frequency;
-        f(frequency);
-      }
-    });
+    context.createMediaStreamSource(stream).connect(analyser);
+    analyser.connect(processor);
+    processor.connect(context.destination);
+    processor.addEventListener("audioprocess", process);
   });
+
+  return () => processor.removeEventListener("audioprocess", process);
 };

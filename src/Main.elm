@@ -18,6 +18,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import GuitarString exposing (GuitarString)
 import Html exposing (Html)
 import Note exposing (Note)
 import Random
@@ -40,15 +41,6 @@ type alias Model =
     }
 
 
-type GuitarString
-    = First
-    | Second
-    | Third
-    | Fourth
-    | Fifth
-    | Sixth
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { position = Nothing, speed = 1, listening = False }
@@ -58,16 +50,15 @@ init _ =
 
 generateRandomPosition : Cmd Msg
 generateRandomPosition =
-    Random.pair
-        (Random.uniform First [ Second, Third, Fourth, Fifth, Sixth ])
-        Note.generator
+    Random.pair GuitarString.generator Note.generator
         |> Random.generate GotRandomPosition
 
 
 type Msg
     = GotRandomPosition ( GuitarString, Note )
     | GotFrequencyChange (Maybe Float)
-    | StartListeningForFrequencyChanges
+    | Start
+    | Stop
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,7 +67,7 @@ update msg model =
         GotRandomPosition position ->
             ( { model | position = Just position }, Cmd.none )
 
-        StartListeningForFrequencyChanges ->
+        Start ->
             ( { model | listening = True }
             , if not model.listening then
                 Cmd.batch
@@ -86,6 +77,11 @@ update msg model =
 
               else
                 Cmd.none
+            )
+
+        Stop ->
+            ( { model | listening = False }
+            , stopListeningForFrequencyChanges ()
             )
 
         GotFrequencyChange frequency ->
@@ -112,6 +108,9 @@ update msg model =
 port startListeningForFrequencyChanges : () -> Cmd msg
 
 
+port stopListeningForFrequencyChanges : () -> Cmd msg
+
+
 port onFrequencyChange : (Maybe Float -> msg) -> Sub msg
 
 
@@ -136,12 +135,16 @@ view model =
             , Input.button
                 [ centerX
                 , Border.rounded 9999
-                , Element.paddingXY 20 10
+                , Element.paddingXY 40 20
                 , Background.color grey
+                , Font.size 30
                 ]
-                { label = text "Start practicing"
-                , onPress = Just StartListeningForFrequencyChanges
-                }
+              <|
+                if model.listening then
+                    { label = text "Stop practicing", onPress = Just Stop }
+
+                else
+                    { label = text "Start practicing", onPress = Just Start }
             ]
 
 
@@ -150,7 +153,7 @@ viewPosition ( guitarString, note ) =
     paragraph []
         [ el [ Font.bold ] (Note.view note)
         , el [ Font.light, Font.color grey ] (text " on the ")
-        , el [ Font.bold ] (text (Debug.toString guitarString))
+        , el [ Font.bold ] (GuitarString.view guitarString)
         , el [ Font.light, Font.color grey ] (text " string")
         ]
 
