@@ -26,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/marreman/guitar/issues"
   },
-  "homepage": "https://github.com/marreman/guitar#readme"
+  "homepage": "https://github.com/marreman/guitar#readme",
+  "browserslist": [
+    "last 2 Chrome versions"
+  ]
 }
